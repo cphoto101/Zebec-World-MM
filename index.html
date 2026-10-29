@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZEBEC WORLD MM - Anime & Manga Platform</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandDark: '#090910',
+            brandCard: '#12121D',
+            brandSurface: '#1B1B2A',
+            brandPurple: '#A855F7',
+            brandAccent: '#C084FC',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar for smooth reading experience */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090910;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1B1B2A;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A855F7;
+    }
+
+    /* Glow Effects */
+    .purple-glow {
+      box-shadow: 0 0 35px -5px rgba(168, 85, 247, 0.4);
+    }
+    
+    /* Animation helper */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-[#090910] text-[#F8FAFC] font-sans min-h-screen flex flex-col pb-16 md:pb-0 selection:bg-purple-600 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 bg-[#090910]/95 backdrop-blur-md border-b border-[#1B1B2A] px-4 py-3 flex items-center justify-between shadow-lg">
+    <!-- Brand Logo -->
+    <div onclick="navigateTo('home')" class="flex items-center space-x-3 cursor-pointer group">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-purple-400 flex items-center justify-center font-black text-xl text-white shadow-lg shadow-purple-900/50 group-hover:scale-105 transition-transform border border-purple-400/30">
+        Z
+      </div>
+      <div class="flex flex-col">
+        <span class="font-black text-lg leading-tight tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-purple-200 to-indigo-300">
+          ZEBEC WORLD
+        </span>
+        <span class="text-[10px] text-purple-400 font-bold tracking-widest -mt-1">
+          MYANMAR
+        </span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center space-x-2">
+      <button onclick="navigateTo('search')" class="p-2.5 rounded-xl bg-[#12121D] text-gray-300 hover:text-white hover:bg-purple-600/20 border border-[#1B1B2A] transition-all">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+
+      <!-- Stealth Admin Button (No loud label) -->
+      <button id="adminQuickBtn" onclick="navigateTo('admin')" class="hidden p-2.5 rounded-xl bg-purple-900/30 text-purple-300 border border-purple-500/40 hover:bg-purple-900/50 transition-all font-semibold text-xs flex items-center space-x-1.5">
+        <i class="fa-solid fa-sliders text-purple-400"></i>
+        <span class="hidden sm:inline">Management</span>
+      </button>
+
+      <button id="authBtnNav" onclick="currentUser ? navigateTo('profile') : openAuthModal()" class="p-2.5 rounded-xl bg-[#12121D] text-gray-300 hover:text-white hover:bg-purple-600/20 border border-[#1B1B2A] transition-all">
+        <i class="fa-solid fa-user"></i>
+      </button>
+
+      <button onclick="toggleSideMenu(true)" class="p-2.5 rounded-xl bg-[#12121D] text-gray-300 hover:text-white hover:bg-purple-600/20 border border-[#1B1B2A] transition-all">
+        <i class="fa-solid fa-bars text-lg"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ADS BANNER PLACEHOLDER -->
+  <div id="topAdBannerContainer" class="max-w-6xl w-full mx-auto px-3 pt-3 hidden">
+    <div id="topAdContent" class="bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-purple-900/40 border border-purple-500/30 rounded-2xl p-3 text-center text-xs text-purple-200 relative overflow-hidden flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="bg-purple-600 text-white font-extrabold text-[9px] px-2 py-0.5 rounded">AD</span>
+        <span id="adText">ZEBEC Premium Pass Available Now!</span>
+      </div>
+      <button onclick="openAuthModal()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1 rounded-xl text-xs">Join</button>
+    </div>
+  </div>
+
+  <!-- SLIDE-OUT MENU -->
+  <div id="sideMenuOverlay" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden transition-opacity">
+    <div class="fixed right-0 top-0 bottom-0 w-80 bg-[#12121D] border-l border-[#1B1B2A] p-5 overflow-y-auto flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-[#1B1B2A]">
+        <span class="font-bold text-lg text-purple-400 flex items-center gap-2">
+          <i class="fa-solid fa-compass"></i> Navigation
+        </span>
+        <button onclick="toggleSideMenu(false)" class="p-2 rounded-full bg-[#1B1B2A] text-gray-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="py-4 space-y-1.5 border-b border-[#1B1B2A]">
+        <button onclick="navigateTo('home'); toggleSideMenu(false);" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#1B1B2A] text-gray-200 font-medium flex items-center space-x-3 transition-colors">
+          <i class="fa-solid fa-house text-purple-400 w-5"></i>
+          <span>Home</span>
+        </button>
+        <button onclick="filterByGenre('Popular'); navigateTo('search'); toggleSideMenu(false);" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#1B1B2A] text-gray-200 font-medium flex items-center space-x-3 transition-colors">
+          <i class="fa-solid fa-fire text-purple-400 w-5"></i>
+          <span>Popular Releases</span>
+        </button>
+        <button onclick="filterByGenre('Anime'); navigateTo('search'); toggleSideMenu(false);" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#1B1B2A] text-gray-200 font-medium flex items-center space-x-3 transition-colors">
+          <i class="fa-solid fa-play text-purple-400 w-5"></i>
+          <span>Anime Series</span>
+        </button>
+        <button onclick="filterByGenre('Manhwa'); navigateTo('search'); toggleSideMenu(false);" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#1B1B2A] text-gray-200 font-medium flex items-center space-x-3 transition-colors">
+          <i class="fa-solid fa-book text-purple-400 w-5"></i>
+          <span>Manhwa / Manga</span>
+        </button>
+        <button onclick="navigateTo('privacy'); toggleSideMenu(false);" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#1B1B2A] text-gray-200 font-medium flex items-center space-x-3 transition-colors">
+          <i class="fa-solid fa-user-shield text-purple-400 w-5"></i>
+          <span>Privacy Policy</span>
+        </button>
+      </div>
+
+      <div class="py-4">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-purple-400 block mb-3">GENRES</span>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <button onclick="filterByGenre('Uncensored')" class="text-left py-1.5 px-2 rounded-lg text-gray-300 hover:bg-[#1B1B2A] hover:text-purple-400 transition-colors">Uncensored</button>
+          <button onclick="filterByGenre('Supernatural')" class="text-left py-1.5 px-2 rounded-lg text-gray-300 hover:bg-[#1B1B2A] hover:text-purple-400 transition-colors">Supernatural</button>
+          <button onclick="filterByGenre('Smut')" class="text-left py-1.5 px-2 rounded-lg text-gray-300 hover:bg-[#1B1B2A] hover:text-purple-400 transition-colors">Smut</button>
+          <button onclick="filterByGenre('Shounen')" class="text-left py-1.5 px-2 rounded-lg text-gray-300 hover:bg-[#1B1B2A] hover:text-purple-400 transition-colors">Shounen</button>
+          <button onclick="filterByGenre('Sci-Fi')" class="text-left py-1.5 px-2 rounded-lg text-gray-300 hover:bg-[#1B1B2A] hover:text-purple-400 transition-colors">Sci-Fi</button>
+          <button onclick="filterByGenre('Romance')" class="text-left py-1.5 px-2 rounded-lg text-gray-300 hover:bg-[#1B1B2A] hover:text-purple-400 transition-colors">Romance</button>
+          <button onclick="filterByGenre('Mystery')" class="text-left py-1.5 px-2 rounded-lg text-gray-300 hover:bg-[#1B1B2A] hover:text-purple-400 transition-colors">Mystery</button>
+          <button onclick="filterByGenre('Action')" class="text-left py-1.5 px-2 rounded-lg text-gray-300 hover:bg-[#1B1B2A] hover:text-purple-400 transition-colors">Action</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-5">
+
+    <!-- PAGE: HOME -->
+    <div id="page-home" class="page-view space-y-8 animate-fade">
+      <!-- HERO CAROUSEL BANNER -->
+      <div id="heroBanner" class="relative rounded-3xl overflow-hidden bg-[#12121D] border border-[#1B1B2A] shadow-2xl min-h-[220px] flex items-center justify-center">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- POSTERS GRID -->
+      <section class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-sparkles text-purple-400"></i>
+            <span>Latest Uploads</span>
+          </h2>
+          <button onclick="navigateTo('search')" class="text-xs text-purple-400 font-bold flex items-center gap-1 hover:underline">
+            View Catalog <i class="fa-solid fa-chevron-right text-[10px]"></i>
+          </button>
+        </div>
+
+        <div id="seriesGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
+          <!-- Dynamic Poster Cards -->
+        </div>
+      </section>
+    </div>
+
+    <!-- PAGE: DETAILS -->
+    <div id="page-details" class="page-view hidden space-y-6 animate-fade">
+      <button onclick="navigateTo('home')" class="text-xs text-gray-400 hover:text-white flex items-center space-x-2 font-medium">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Home</span>
+      </button>
+
+      <div id="detailsContent">
+        <!-- Loaded via JS -->
+      </div>
+    </div>
+
+    <!-- PAGE: MANGA CHAPTER READER -->
+    <div id="page-reader" class="page-view hidden space-y-4 max-w-3xl mx-auto animate-fade">
+      <div class="sticky top-16 z-30 bg-[#090910]/90 backdrop-blur-md p-3 rounded-2xl border border-[#1B1B2A] flex items-center justify-between shadow-xl">
+        <button onclick="navigateTo('details')" class="text-xs text-gray-400 hover:text-white flex items-center space-x-1 font-semibold">
+          <i class="fa-solid fa-chevron-left"></i>
+          <span>Exit Reader</span>
+        </button>
+
+        <span id="readerTitle" class="font-extrabold text-sm text-purple-300 truncate max-w-[200px]">
+          Chapter
+        </span>
+
+        <span class="text-[10px] bg-purple-900/40 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 font-bold">
+          Continuous Mode
+        </span>
+      </div>
+
+      <div id="mangaPagesStack" class="flex flex-col space-y-1 bg-black rounded-xl overflow-hidden border border-[#1B1B2A] shadow-2xl min-h-[500px]">
+        <!-- Image list -->
+      </div>
+
+      <div class="text-center text-xs text-gray-500 py-6 font-medium">
+        -- End of Chapter --
+      </div>
+    </div>
+
+    <!-- PAGE: ANIME VIDEO PLAYER -->
+    <div id="page-player" class="page-view hidden space-y-4 max-w-4xl mx-auto animate-fade">
+      <button onclick="navigateTo('details')" class="text-xs text-gray-400 hover:text-white flex items-center space-x-2">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Details</span>
+      </button>
+
+      <div class="bg-black rounded-3xl overflow-hidden aspect-video border border-[#1B1B2A] shadow-2xl relative">
+        <video id="animeVideoPlayer" controls class="w-full h-full">
+          <source src="" type="video/mp4">
+        </video>
+      </div>
+
+      <div class="bg-[#12121D] p-5 rounded-2xl border border-[#1B1B2A] space-y-1">
+        <h2 id="videoTitle" class="font-bold text-lg text-white">Episode Title</h2>
+        <p class="text-xs text-purple-400 font-semibold">ZEBEC WORLD Stream Server HD</p>
+      </div>
+    </div>
+
+    <!-- PAGE: SEARCH / EXPLORE -->
+    <div id="page-search" class="page-view hidden space-y-6 animate-fade">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
+        <input 
+          id="searchInput"
+          type="text" 
+          oninput="handleSearchInput(this.value)"
+          placeholder="Search Titles, Authors, Genres..."
+          class="w-full bg-[#12121D] border border-[#1B1B2A] focus:border-purple-500 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-gray-500 outline-none transition-colors shadow-inner"
+        />
+      </div>
+
+      <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none">
+        <button onclick="filterByGenre('All')" class="px-4 py-1.5 rounded-full text-xs font-bold bg-purple-600 text-white shadow-md">All</button>
+        <button onclick="filterByGenre('Manhwa')" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#12121D] text-gray-300 border border-[#1B1B2A] hover:bg-purple-600/20">Manhwa</button>
+        <button onclick="filterByGenre('Manga')" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#12121D] text-gray-300 border border-[#1B1B2A] hover:bg-purple-600/20">Manga</button>
+        <button onclick="filterByGenre('Anime')" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#12121D] text-gray-300 border border-[#1B1B2A] hover:bg-purple-600/20">Anime</button>
+        <button onclick="filterByGenre('Romance')" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#12121D] text-gray-300 border border-[#1B1B2A] hover:bg-purple-600/20">Romance</button>
+      </div>
+
+      <div id="searchGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Results -->
+      </div>
+    </div>
+
+    <!-- PAGE: LIBRARY -->
+    <div id="page-library" class="page-view hidden space-y-6 animate-fade">
+      <h1 class="text-xl font-bold text-white flex items-center space-x-2">
+        <i class="fa-solid fa-bookmark text-purple-400"></i>
+        <span>My Bookmarks</span>
+      </h1>
+      <div id="libraryGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Bookmarked items -->
+      </div>
+    </div>
+
+    <!-- PAGE: PRIVACY POLICY -->
+    <div id="page-privacy" class="page-view hidden space-y-6 max-w-3xl mx-auto animate-fade">
+      <h1 class="text-2xl font-black text-purple-400 flex items-center gap-2 border-b border-[#1B1B2A] pb-3">
+        <i class="fa-solid fa-shield-halved"></i> Privacy Policy & Terms of Service
+      </h1>
+      <div class="bg-[#12121D] p-6 rounded-3xl border border-[#1B1B2A] space-y-4 text-xs sm:text-sm text-gray-300 leading-relaxed">
+        <p><strong>1. Introduction</strong><br>Welcome to ZEBEC WORLD MM. By accessing or using our platform, you agree to comply with our terms and guidelines regarding user data privacy and account credentials.</p>
+        <p><strong>2. Account & Content Access</strong><br>Authentication is mandatory to unlock chapters, manga pages, and video streaming. Unauthenticated users can view public catalog summaries and titles.</p>
+        <p><strong>3. Data Protection</strong><br>Your email and preferences are safely stored using standard encryption protocols. We do not sell or distribute personal information to external third parties.</p>
+        <p><strong>4. Content Disclaimer</strong><br>All posted media is managed directly through our trusted content publishing system for authorized viewing only.</p>
+      </div>
+    </div>
+
+    <!-- PAGE: ADMIN DASHBOARD (COMPLETE DASHBOARD & MANAGEMENT) -->
+    <div id="page-profile" class="page-view hidden max-w-4xl mx-auto space-y-6 animate-fade px-4">
+      <div class="rounded-3xl border border-[#1B1B2A] bg-[#12121D] p-6 sm:p-8">
+        <div class="flex flex-col sm:flex-row items-center gap-5">
+          <img id="profileAvatar" src="https://www.gravatar.com/avatar/?d=mp" class="h-24 w-24 rounded-full border-2 border-purple-500 object-cover" alt="Profile picture">
+          <div class="flex-1 text-center sm:text-left">
+            <h2 id="profileName" class="text-2xl font-black">My Profile</h2>
+            <p id="profileEmail" class="mt-1 text-sm text-gray-400">Login ဝင်ထားမှ Profile ကိုအသုံးပြုနိုင်ပါသည်။</p>
+            <span id="profileTier" class="mt-3 inline-flex rounded-full bg-purple-900/40 px-3 py-1 text-xs font-bold text-purple-200">Free User</span>
+          </div>
+          <button onclick="requestPushPermission()" class="rounded-xl border border-indigo-500/40 px-4 py-2 text-sm font-bold text-indigo-200">🔔 Notification ဖွင့်ရန်</button>
+          <button onclick="document.getElementById('avatarFile').click()" class="rounded-xl border border-purple-500/40 px-4 py-2 text-sm font-bold text-purple-200"><i class="fa-solid fa-camera mr-2"></i>ပုံရွေးရန်</button>
+          <input id="avatarFile" type="file" accept="image/*" class="hidden" onchange="uploadProfileAvatar(event)">
+        </div>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-3">
+        <div class="rounded-2xl border border-[#1B1B2A] bg-[#12121D] p-5"><p class="text-xs text-gray-400">Reading History</p><p id="profileHistoryCount" class="mt-2 text-2xl font-black">0</p></div>
+        <div class="rounded-2xl border border-[#1B1B2A] bg-[#12121D] p-5"><p class="text-xs text-gray-400">Liked Posts</p><p id="profileLikesCount" class="mt-2 text-2xl font-black">0</p></div>
+        <div class="rounded-2xl border border-[#1B1B2A] bg-[#12121D] p-5"><p class="text-xs text-gray-400">Membership</p><p id="profileMembership" class="mt-2 text-lg font-black">Free</p></div>
+      </div>
+      <div class="rounded-3xl border border-[#1B1B2A] bg-[#12121D] p-6"><h3 class="mb-4 text-lg font-black"><i class="fa-solid fa-clock-rotate-left mr-2 text-purple-400"></i>History</h3><div id="profileHistory" class="space-y-3 text-sm text-gray-300">History မရှိသေးပါ။</div></div>
+      <div class="rounded-3xl border border-[#1B1B2A] bg-[#12121D] p-6"><h3 class="mb-4 text-lg font-black"><i class="fa-solid fa-heart mr-2 text-pink-400"></i>Liked Posts</h3><div id="profileLikes" class="space-y-3 text-sm text-gray-300">Liked Post မရှိသေးပါ။</div></div>
+    </div>
+
+    <div id="page-admin" class="page-view hidden space-y-8 max-w-3xl mx-auto animate-fade">
+      
+      <!-- Admin Header -->
+      <div class="flex items-center justify-between border-b border-[#1B1B2A] pb-4">
+        <div>
+          <h1 class="text-2xl font-extrabold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-sliders text-purple-400"></i>
+            <span>Management Console</span>
+          </h1>
+          <p class="text-xs text-gray-400 mt-1">ZEBEC Control Panel & Upload Center</p>
+        </div>
+        <button onclick="generateSamplePost()" class="bg-purple-900/40 border border-purple-500/40 hover:bg-purple-900/60 text-purple-300 text-xs px-3 py-2 rounded-xl font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-plus-circle"></i> Add Sample Post
+        </button>
+      </div>
+
+      <!-- TAB SELECTION WITHIN MANAGEMENT -->
+      <div class="flex items-center space-x-2 border-b border-[#1B1B2A] pb-2">
+        <button onclick="switchAdminSubTab('uploader')" id="admTabUploader" class="px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white">Upload Post</button>
+        <button onclick="switchAdminSubTab('manage')" id="admTabManage" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#12121D] text-gray-400 hover:text-white">Manage Posts</button>
+        <button onclick="switchAdminSubTab('users')" id="admTabUsers" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#12121D] text-gray-400 hover:text-white">Users & Premium</button>
+        <button onclick="switchAdminSubTab('ads')" id="admTabAds" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#12121D] text-gray-400 hover:text-white">Ads Manager</button>
+      </div>
+
+      <!-- SUB-TAB 1: POST UPLOADER FORM -->
+      <form id="adminUploaderForm" onsubmit="handleAdminPublish(event)" class="bg-[#12121D] p-6 rounded-3xl border border-[#1B1B2A] space-y-4 shadow-2xl">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-gray-400 font-bold block mb-1">Title (ခေါင်းစဉ်)</label>
+            <input id="admTitle" type="text" required placeholder="Title name..." class="w-full bg-[#1B1B2A] border border-gray-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-bold block mb-1">Type</label>
+            <select id="admType" class="w-full bg-[#1B1B2A] border border-gray-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500">
+              <option value="Manhwa">Manhwa</option>
+              <option value="Manga">Manga</option>
+              <option value="Anime">Anime</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400 font-bold block mb-1">Genres (Comma separated)</label>
+          <input id="admGenres" type="text" placeholder="Drama, Romance, Action" value="Drama, Romance" class="w-full bg-[#1B1B2A] border border-gray-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500">
+        </div>
+
+        <!-- LOCAL FILE PICKER FOR POSTER AND BANNER -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-3 bg-[#1B1B2A] rounded-2xl border border-gray-700 space-y-2">
+            <label class="text-xs text-purple-300 font-bold block"><i class="fa-solid fa-image"></i> Poster Image File</label>
+            <input id="admPosterFile" type="file" accept="image/*" onchange="handlePosterFileSelect(event)" class="text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer">
+            <div id="posterPreview" class="w-full h-24 bg-black/40 rounded-xl overflow-hidden hidden">
+              <img id="posterPreviewImg" src="" class="w-full h-full object-cover">
+            </div>
+          </div>
+
+          <div class="p-3 bg-[#1B1B2A] rounded-2xl border border-gray-700 space-y-2">
+            <label class="text-xs text-purple-300 font-bold block"><i class="fa-solid fa-panorama"></i> Banner Image File</label>
+            <input id="admBannerFile" type="file" accept="image/*" onchange="handleBannerFileSelect(event)" class="text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer">
+            <div id="bannerPreview" class="w-full h-24 bg-black/40 rounded-xl overflow-hidden hidden">
+              <img id="bannerPreviewImg" src="" class="w-full h-full object-cover">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <label class="flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-950/20 p-3 text-sm text-red-200"><input id="admAdultContent" type="checkbox" class="accent-red-500"> 18+ အကြောင်းအရာ (အသက်ပြည့်သူများသာ)</label>
+          <div><label class="text-xs text-gray-400 font-bold block mb-1">HTML Viewer URL (optional)</label><input id="admHtmlUrl" type="url" placeholder="https://your-site.com/viewer.html" class="w-full bg-[#1B1B2A] border border-gray-700 rounded-xl p-3 text-sm text-white"></div>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400 font-bold block mb-1">Synopsis (အကြောင်းအရာ)</label>
+          <textarea id="admSynopsis" rows="3" placeholder="Summary text..." class="w-full bg-[#1B1B2A] border border-gray-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500"></textarea>
+        </div>
+
+        <!-- BATCH MANGA IMAGE SELECTOR WORKFLOW -->
+        <div class="p-4 bg-[#1B1B2A] rounded-2xl border border-dashed border-purple-500/50 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-images text-purple-400"></i> Select Manga Chapter Pages (All Select)
+            </span>
+            <span id="batchCount" class="text-[11px] text-gray-400 font-medium">0 Pages Selected</span>
+          </div>
+
+          <input id="admBatchFiles" type="file" multiple accept="image/*" onchange="handleBatchSelect(event)" class="text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer">
+
+          <div id="batchPreviewGrid" class="grid grid-cols-4 gap-2 pt-2 max-h-36 overflow-y-auto hidden">
+            <!-- Image previews -->
+          </div>
+        </div>
+
+        <button id="formSubmitBtnText" type="submit" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold py-3.5 rounded-2xl shadow-xl shadow-purple-900/40 transition-all">
+          Publish Directly To Platform
+        </button>
+      </form>
+
+      <!-- SUB-TAB: MANAGE POSTS -->
+      <div id="adminManagePostsPanel" class="hidden bg-[#12121D] p-6 rounded-3xl border border-[#1B1B2A] space-y-4 shadow-2xl">
+        <h2 class="font-bold text-lg text-white border-b border-[#1B1B2A] pb-3">Published Posts</h2>
+        <div id="adminPostsList" class="space-y-3"></div>
+      </div>
+
+      <!-- SUB-TAB 2: USER MANAGEMENT & PREMIUM ACCEPTS -->
+      <div id="adminUsersPanel" class="hidden bg-[#12121D] p-6 rounded-3xl border border-[#1B1B2A] space-y-4 shadow-2xl">
+        <h2 class="font-bold text-lg text-white border-b border-[#1B1B2A] pb-3 flex items-center gap-2">
+          <i class="fa-solid fa-users text-purple-400"></i> User Accounts & Premium Approval
+        </h2>
+        <div id="userListContainer" class="space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- SUB-TAB 3: ADVERTISING MANAGER -->
+      <div id="adminNotificationPanel" class="bg-[#12121D] p-6 rounded-3xl border border-[#1B1B2A] space-y-4 shadow-2xl">
+        <h2 class="text-lg font-bold">Push Notification ပို့ရန်</h2>
+        <input id="pushTitle" maxlength="100" placeholder="Notification ခေါင်းစဉ်" class="w-full rounded-xl border border-gray-700 bg-[#1B1B2A] p-3 text-sm text-white">
+        <textarea id="pushBody" maxlength="500" placeholder="Message" class="w-full rounded-xl border border-gray-700 bg-[#1B1B2A] p-3 text-sm text-white"></textarea>
+        <button onclick="sendAdminPush()" class="rounded-xl bg-purple-600 px-4 py-3 text-sm font-bold text-white">Devices အားလုံးသို့ ပို့မည်</button>
+      </div>
+      <div id="adminMaintenancePanel" class="bg-[#12121D] p-6 rounded-3xl border border-[#1B1B2A] space-y-4 shadow-2xl">
+        <h3 class="text-lg font-black">Website Maintenance</h3>
+        <label class="flex items-center gap-3 text-sm"><input id="maintenanceEnabled" type="checkbox" class="accent-purple-600"> Maintenance Mode ON</label>
+        <textarea id="maintenanceMessage" rows="2" placeholder="Maintenance message…" class="w-full rounded-xl border border-gray-700 bg-[#1B1B2A] p-3 text-sm text-white">Website ကို maintenance ပြုလုပ်နေပါသည်။</textarea>
+        <button onclick="saveMaintenanceSettings()" class="rounded-xl bg-purple-600 px-4 py-2 text-sm font-bold">Save Maintenance Settings</button>
+      </div>
+      <div id="adminAdsPanel" class="hidden bg-[#12121D] p-6 rounded-3xl border border-[#1B1B2A] space-y-4 shadow-2xl">
+        <h2 class="font-bold text-lg text-white border-b border-[#1B1B2A] pb-3 flex items-center gap-2">
+          <i class="fa-solid fa-rectangle-ad text-purple-400"></i> Platform Advertisement Settings
+        </h2>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-gray-400 font-bold block mb-1">Top Announcement Banner Text</label>
+            <input id="adTextInput" type="text" value="ZEBEC World MM - Exclusive Premium Content Unlocked!" class="w-full bg-[#1B1B2A] border border-gray-700 rounded-xl p-3 text-sm text-white">
+          </div>
+          <button onclick="saveAdSettings()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs">
+            Save & Enable Ads
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Floating public chat -->
+  <div id="publicChatPanel" class="hidden fixed bottom-24 right-4 z-50 flex h-[min(70vh,520px)] w-[min(92vw,360px)] flex-col overflow-hidden rounded-3xl border border-purple-500/30 bg-[#10101a] shadow-2xl shadow-purple-950/50">
+    <div class="flex items-center justify-between border-b border-[#29293b] bg-[#171725] p-4">
+      <div><p class="font-black">Public Chat</p><p class="text-[10px] text-emerald-400">Community room</p></div>
+      <button onclick="togglePublicChat(false)" class="p-2 text-gray-400 hover:text-white" aria-label="Close chat"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="publicChatMessages" class="flex-1 space-y-3 overflow-y-auto p-3 text-sm"><p class="text-center text-xs text-gray-500">Chat loading…</p></div>
+    <form onsubmit="sendPublicChatMessage(event)" class="flex gap-2 border-t border-[#29293b] p-3">
+      <input id="publicChatInput" maxlength="500" placeholder="စာရေးပါ…" class="min-w-0 flex-1 rounded-xl border border-gray-700 bg-[#1B1B2A] px-3 py-2 text-sm text-white outline-none focus:border-purple-500">
+      <button class="rounded-xl bg-purple-600 px-4 text-white" aria-label="Send message"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+  </div>
+  <button id="publicChatFab" onclick="togglePublicChat()" class="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-purple-300/40 bg-gradient-to-br from-purple-600 to-indigo-600 text-xl text-white shadow-xl shadow-purple-950/60 hover:scale-105 md:bottom-6" aria-label="Open public chat"><i class="fa-solid fa-comments"></i><span id="chatUnreadDot" class="absolute right-0 top-0 hidden h-3 w-3 rounded-full bg-pink-500"></span></button>
+
+  <!-- MODERN HIGH-QUALITY AUTHENTICATION MODAL SYSTEM -->
+  <div id="authModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4 animate-fade">
+    <div class="bg-[#12121D] border border-[#1B1B2A] rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 relative shadow-2xl purple-glow">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <!-- Auth Modal Tabs -->
+      <div class="flex items-center justify-center border-b border-[#1B1B2A] pb-3 gap-6">
+        <button onclick="switchAuthMode('login')" id="tabBtnLogin" class="font-black text-lg text-purple-400 border-b-2 border-purple-500 pb-1">Log In</button>
+        <button onclick="switchAuthMode('register')" id="tabBtnRegister" class="font-black text-lg text-gray-500 border-b-2 border-transparent pb-1 hover:text-gray-300">Register</button>
+      </div>
+
+      <div id="authError" class="hidden p-3 bg-red-900/40 border border-red-500/40 rounded-xl text-xs text-red-300 text-center font-medium"></div>
+
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <div>
+          <label class="text-xs font-bold text-gray-300 block mb-1">Email Address</label>
+          <div class="relative">
+            <i class="fa-solid fa-envelope absolute left-3.5 top-3 text-gray-500 text-xs"></i>
+            <input id="loginEmail" type="email" required placeholder="name@example.com" class="w-full bg-[#1B1B2A] border border-gray-700 focus:border-purple-500 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-gray-300 block mb-1">Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-3 text-gray-500 text-xs"></i>
+            <input id="loginPass" type="password" required placeholder="••••••••" class="w-full bg-[#1B1B2A] border border-gray-700 focus:border-purple-500 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white outline-none">
+          </div>
+        </div>
+
+        <!-- PRIVACY POLICY CHECKBOX REQUIRED BEFORE LOGIN / REGISTER -->
+        <div class="flex items-start space-x-2.5 pt-1">
+          <input id="privacyCheck" type="checkbox" required class="mt-0.5 rounded bg-[#1B1B2A] border-gray-700 text-purple-600 focus:ring-0 cursor-pointer">
+          <label for="privacyCheck" class="text-[11px] text-gray-400 leading-snug">
+            I agree to the <a href="javascript:void(0)" onclick="navigateTo('privacy'); closeAuthModal();" class="text-purple-400 underline">Privacy Policy</a> & Terms of Service to proceed.
+          </label>
+        </div>
+
+        <button type="submit" id="authSubmitBtn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold py-3 rounded-xl shadow-lg shadow-purple-600/30 transition-all">
+          Log In
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="sendLoginCode()" class="rounded-xl border border-purple-500/40 bg-purple-900/20 px-3 py-2 text-xs font-bold text-purple-200 hover:bg-purple-900/40"><i class="fa-solid fa-envelope-circle-check mr-1"></i> Email Code</button>
+          <button type="button" onclick="sendPasswordReset()" class="rounded-xl border border-gray-700 bg-[#1B1B2A] px-3 py-2 text-xs font-bold text-gray-300 hover:text-white"><i class="fa-solid fa-key mr-1"></i> Forgot Password</button>
+        </div>
+        <div id="emailCodeBox" class="hidden space-y-2 rounded-xl border border-purple-500/30 bg-purple-950/20 p-3">
+          <p class="text-xs text-gray-300">Email ထဲပို့ထားသော ၆ လုံး code ကိုထည့်ပါ။</p>
+          <input id="emailLoginCode" inputmode="numeric" maxlength="6" placeholder="123456" class="w-full rounded-xl border border-gray-700 bg-[#1B1B2A] px-3 py-2 text-sm tracking-[0.4em] text-white">
+          <button type="button" onclick="verifyLoginCode()" class="w-full rounded-xl bg-purple-600 py-2 text-sm font-bold text-white">Verify Code & Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAVIGATION -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-[#090910]/95 backdrop-blur-md border-t border-[#1B1B2A] px-2 py-2 z-40 md:hidden">
+    <div class="flex items-center justify-around">
+      <button onclick="navigateTo('home')" id="nav-home" class="flex flex-col items-center space-y-1 px-3 py-1 text-purple-400 font-bold">
+        <i class="fa-solid fa-house text-base"></i>
+        <span class="text-[10px]">Home</span>
+      </button>
+
+      <button onclick="filterByGenre('Popular'); navigateTo('search')" id="nav-popular" class="flex flex-col items-center space-y-1 px-3 py-1 text-gray-400">
+        <i class="fa-solid fa-fire text-base"></i>
+        <span class="text-[10px]">Popular</span>
+      </button>
+
+      <button onclick="navigateTo('search')" id="nav-search" class="flex flex-col items-center space-y-1 px-3 py-1 text-gray-400">
+        <i class="fa-solid fa-magnifying-glass text-base"></i>
+        <span class="text-[10px]">Search</span>
+      </button>
+
+      <button onclick="navigateTo('library')" id="nav-library" class="flex flex-col items-center space-y-1 px-3 py-1 text-gray-400">
+        <i class="fa-solid fa-bookmark text-base"></i>
+        <span class="text-[10px]">Library</span>
+      </button>
+
+      <button onclick="openAuthModal()" id="nav-me" class="flex flex-col items-center space-y-1 px-3 py-1 text-gray-400">
+        <i class="fa-solid fa-user text-base"></i>
+        <span class="text-[10px]" id="meLabel">Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- APPLICATION LOGIC & FIREBASE SETUP -->
+  <script>
+    // 1. Firebase Credentials Setup
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_vP5cnZwwMEpAwtCFqT7y6iIAgcbvhLw",
+      authDomain: "zebectv.firebaseapp.com",
+      projectId: "zebectv",
+      storageBucket: "zebectv.firebasestorage.app",
+      messagingSenderId: "128645353832",
+      appId: "1:128645353832:web:877c0beec4a1d69edac6dd"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Clean Dynamic Catalog State synced with Firebase Firestore
+    let seriesCatalog = [];
+
+    let registeredUsers = [
+      { email: 'zaroqt@gmail.com', premium: true, date: 'Admin' }
+    ];
+
+    let userBookmarks = [];
+    let selectedSeries = null;
+    let selectedGenre = 'All';
+    let uploadedBatchPages = [];
+    let uploadedPosterData = '';
+    let uploadedBannerData = '';
+    let currentUser = null;
+    let isRegisterMode = false;
+    let editingSeriesId = null; // Track if editing existing post
+
+    // Real-Time Firebase Firestore Listener
+    function listenToFirestoreCatalog() {
+      db.collection("series").onSnapshot((snapshot) => {
+        seriesCatalog = [];
+        snapshot.forEach((doc) => {
+          seriesCatalog.push({ id: doc.id, ...doc.data() });
+        });
+        renderHome();
+        renderAdminPostsList();
+        if (document.getElementById('searchGrid')) handleSearchInput(document.getElementById('searchInput')?.value || '');
+      }, (error) => {
+        console.error("Firestore catalog listener failed:", error);
+        const grid = document.getElementById('seriesGrid');
+        if (grid && seriesCatalog.length === 0) {
+          grid.innerHTML = `<div class="col-span-full p-5 rounded-2xl border border-red-500/30 bg-red-900/10 text-sm text-red-200">Content မတက်လာပါ။ Firebase Firestore Rules / Internet connection ကိုစစ်ပါ။ (${String(error.code || error.message || 'Firestore error').replace(/[<>&"]/g, '')})</div>`;
+        }
+      });
+    }
+
+    // Navigation state
+    function navigateTo(pageId) {
+      if (pageId === 'admin' && (!currentUser || (currentUser.email || '').toLowerCase() !== 'zaroqt@gmail.com')) {
+        openAuthModal();
+        switchAuthMode('login');
+        const errBox = document.getElementById('authError');
+        errBox.textContent = 'Admin account နဲ့ Login ဝင်ထားမှ Management Console ကို အသုံးပြုနိုင်ပါတယ်။';
+        errBox.classList.remove('hidden');
+        return;
+      }
+      document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(`page-${pageId}`);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('nav button').forEach(b => {
+        b.classList.remove('text-purple-400', 'font-bold');
+        b.classList.add('text-gray-400');
+      });
+      const activeNav = document.getElementById(`nav-${pageId}`);
+      if (activeNav) {
+        activeNav.classList.remove('text-gray-400');
+        activeNav.classList.add('text-purple-400', 'font-bold');
+      }
+
+      window.scrollTo(0,0);
+    }
+
+    function toggleSideMenu(show) {
+      const menu = document.getElementById('sideMenuOverlay');
+      if (show) menu.classList.remove('hidden');
+      else menu.classList.add('hidden');
+    }
+
+    async function logoutCurrentUser(){ try { await auth.signOut(); closeAuthModal(); navigateTo('home'); } catch(e) { alert('Logout မအောင်မြင်ပါ: '+(e.message||e)); } }
+
+    // Auth Modal Handlers
+    function openAuthModal() {
+      document.getElementById('authModal').classList.remove('hidden');
+      document.getElementById('authError').classList.add('hidden');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function switchAuthMode(mode) {
+      isRegisterMode = (mode === 'register');
+      const loginTab = document.getElementById('tabBtnLogin');
+      const regTab = document.getElementById('tabBtnRegister');
+      const submitBtn = document.getElementById('authSubmitBtn');
+
+      if (isRegisterMode) {
+        regTab.className = "font-black text-lg text-purple-400 border-b-2 border-purple-500 pb-1";
+        loginTab.className = "font-black text-lg text-gray-500 border-b-2 border-transparent pb-1 hover:text-gray-300";
+        submitBtn.innerText = "Register Account";
+      } else {
+        loginTab.className = "font-black text-lg text-purple-400 border-b-2 border-purple-500 pb-1";
+        regTab.className = "font-black text-lg text-gray-500 border-b-2 border-transparent pb-1 hover:text-gray-300";
+        submitBtn.innerText = "Log In";
+      }
+    }
+
+    // Firebase Authentication: existing accounts must use Log In, not Register.
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('loginPass').value;
+      const errBox = document.getElementById('authError');
+      const submitBtn = document.getElementById('authSubmitBtn');
+      errBox.classList.add('hidden');
+      errBox.textContent = '';
+
+      if (!email || !pass) {
+        errBox.textContent = 'Email နဲ့ Password ကို ဖြည့်ပေးပါ။';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-60');
+      submitBtn.textContent = 'Please wait...';
+
+      try {
+        if (isRegisterMode) {
+          const credential = await auth.createUserWithEmailAndPassword(email, pass);
+          currentUser = credential.user;
+          // A successful registration signs the user in automatically.
+        } else {
+          const credential = await auth.signInWithEmailAndPassword(email, pass);
+          currentUser = credential.user;
+        }
+        closeAuthModal();
+      } catch (err) {
+        const code = err && err.code ? err.code : '';
+        let message = (err && err.message) ? err.message : 'Unknown authentication error.';
+        if (code === 'auth/email-already-in-use') {
+          message = 'ဒီ Email နဲ့ Account ရှိပြီးသားပါ။ Register မလုပ်ဘဲ Log In ကိုရွေးပြီး ဝင်ပါ။ Password မေ့နေရင် Firebase Console သို့မဟုတ် Password Reset feature ကို အသုံးပြုပါ။';
+          switchAuthMode('login');
+        } else if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+          message = 'Email သို့မဟုတ် Password မှားနေပါတယ်။ Email ကိုစစ်ပြီး ပြန်ကြိုးစားပါ။';
+        } else if (code === 'auth/weak-password') {
+          message = 'Password အနည်းဆုံး ၆ လုံး ရှိရပါမယ်။';
+        } else if (code === 'auth/invalid-email') {
+          message = 'Email ပုံစံ မမှန်ပါ။';
+        } else if (code === 'auth/operation-not-allowed') {
+          message = 'Firebase Console > Authentication > Sign-in method မှာ Email/Password ကို Enable လုပ်ပါ။';
+        } else if (code === 'auth/network-request-failed') {
+          message = 'Network ချိတ်ဆက်မှု မအောင်မြင်ပါ။ Internet ကိုစစ်ပြီး ပြန်ကြိုးစားပါ။';
+        } else if (code === 'permission-denied' || code === 'firestore/permission-denied') {
+          message = 'Firebase Firestore Rules က ဒီလုပ်ဆောင်ချက်ကို ခွင့်မပြုပါ။ Firestore Rules ကိုစစ်ပါ။';
+        }
+        errBox.textContent = message;
+        errBox.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-60');
+        submitBtn.textContent = isRegisterMode ? 'Register Account' : 'Log In';
+      }
+    }
+
+    async function sendPasswordReset() {
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const box = document.getElementById('authError');
+      if (!email) { box.textContent = 'Password reset link ပို့ရန် Email ကို အရင်ဖြည့်ပါ။'; box.classList.remove('hidden'); return; }
+      try {
+        await auth.sendPasswordResetEmail(email);
+        box.textContent = 'Password ပြန်သတ်မှတ်ရန် link ကို Email သို့ပို့ပြီးပါပြီ။ Spam folder ကိုလည်းစစ်ပါ။';
+        box.className = 'p-3 rounded-xl border border-emerald-500/30 bg-emerald-900/20 text-xs text-emerald-200 text-center';
+      } catch (e) {
+        box.textContent = authFriendlyError(e);
+        box.className = 'p-3 rounded-xl border border-red-500/40 bg-red-900/30 text-xs text-red-200 text-center';
+      }
+    }
+    function authFriendlyError(e) {
+      const c = e && e.code || '';
+      if (c === 'auth/network-request-failed') return 'Firebase Auth ကို network မချိတ်ဆက်နိုင်ပါ။ Internet/VPN, Firebase Auth domain, ad blocker နှင့် Firebase Console > Authentication ကိုစစ်ပါ။';
+      if (c === 'auth/unauthorized-domain') return 'ဒီ website domain ကို Firebase Console > Authentication > Settings > Authorized domains မှာ ထည့်ပါ။';
+      if (c === 'auth/operation-not-allowed') return 'Firebase Console > Authentication > Sign-in method မှာ Email/Password ကို Enable လုပ်ပါ။';
+      if (c === 'auth/too-many-requests') return 'ကြိုးစားမှုများလွန်းပါသည်။ ခဏစောင့်ပြီး ပြန်လုပ်ပါ။';
+      return (e && e.message) || 'လုပ်ဆောင်မှု မအောင်မြင်ပါ။';
+    }
+    async function sendLoginCode() {
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const box = document.getElementById('authError');
+      if (!email) { box.textContent = 'Email ကိုအရင်ဖြည့်ပါ။'; box.classList.remove('hidden'); return; }
+      try {
+        const r = await fetch('/api/auth/send-code', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+        const data = await r.json().catch(()=>({}));
+        if (!r.ok) throw new Error(data.error || 'Email code မပို့နိုင်ပါ။ Backend server setup ကိုစစ်ပါ။');
+        document.getElementById('emailCodeBox').classList.remove('hidden');
+        box.textContent = 'Email Code ပို့ပြီးပါပြီ။ Inbox/Spam folder ကိုစစ်ပါ။'; box.className='p-3 rounded-xl border border-emerald-500/30 bg-emerald-900/20 text-xs text-emerald-200 text-center'; box.classList.remove('hidden');
+      } catch(e) {
+        box.textContent = e.message.includes('Failed to fetch') ? 'Email Code API server မတွေ့ပါ။ Node backend ကို deploy လုပ်ပြီး website နဲ့ same origin မှာ run ပေးပါ။' : e.message;
+        box.className='p-3 rounded-xl border border-red-500/40 bg-red-900/30 text-xs text-red-200 text-center'; box.classList.remove('hidden');
+      }
+    }
+    async function verifyLoginCode() {
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const code = document.getElementById('emailLoginCode').value.trim();
+      const box = document.getElementById('authError');
+      try {
+        const r = await fetch('/api/auth/verify-code', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code})});
+        const data = await r.json().catch(()=>({}));
+        if (!r.ok) throw new Error(data.error || 'Code မှားနေသည် သို့မဟုတ် သက်တမ်းကုန်နေပါသည်။');
+        await auth.signInWithCustomToken(data.customToken);
+        document.getElementById('emailCodeBox').classList.add('hidden');
+        closeAuthModal();
+      } catch(e) {
+        box.textContent = e.message.includes('Failed to fetch') ? 'Email Code API server မတွေ့ပါ။ Backend ကို deploy လုပ်ရန်လိုပါသည်။' : e.message;
+        box.className='p-3 rounded-xl border border-red-500/40 bg-red-900/30 text-xs text-red-200 text-center'; box.classList.remove('hidden');
+      }
+    }
+
+    auth.onAuthStateChanged(user => {
+      currentUser = user || null;
+      const adminButton = document.getElementById('adminQuickBtn');
+      const meLabel = document.getElementById('meLabel');
+
+      // UI-only admin gate. Secure access must ALSO be enforced in Firestore Rules.
+      const isAdmin = !!user && (user.email || '').toLowerCase() === 'zaroqt@gmail.com';
+      adminButton.classList.toggle('hidden', !isAdmin);
+      meLabel.innerText = user ? 'Profile' : 'Login';
+      document.getElementById('nav-me').onclick = () => user ? navigateTo('profile') : openAuthModal();
+      const authNav = document.getElementById('authBtnNav');
+      authNav.innerHTML = user ? '<i class="fa-solid fa-right-from-bracket"></i>' : '<i class="fa-solid fa-user"></i>' ;
+      authNav.title = user ? 'Logout' : 'Login';
+      authNav.onclick = user ? logoutCurrentUser : openAuthModal;
+      if (user) loadProfile();
+      if (isAdmin && !document.getElementById('page-admin').classList.contains('hidden')) {
+        renderAdminUsers();
+      }
+    });
+
+    // Modern Network-Aware Lazy Image Rendering
+    function createLazyImage(src, alt = '', className = '') {
+      return `
+        <div class="relative overflow-hidden bg-[#1B1B2A] ${className}">
+          <img 
+            src="${src}" 
+            alt="${alt}" 
+            loading="lazy"
+            onload="this.classList.remove('opacity-0'); this.previousElementSibling?.remove();" 
+            class="w-full h-full object-cover transition-opacity duration-500 opacity-0" 
+          />
+          <div class="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-[#1B1B2A] to-purple-900/20 animate-pulse"></div>
+        </div>
+      `;
+    }
+
+    // Render Home Catalog with Modern Redesigned Empty State
+    function renderHome() {
+      const bannerContainer = document.getElementById('heroBanner');
+      const gridContainer = document.getElementById('seriesGrid');
+
+      if (seriesCatalog.length === 0) {
+        bannerContainer.innerHTML = `
+          <div class="p-8 sm:p-12 text-center space-y-4 max-w-md mx-auto">
+            <div class="w-16 h-16 rounded-2xl bg-purple-900/30 border border-purple-500/30 flex items-center justify-center mx-auto text-purple-400 text-2xl shadow-xl">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <h2 class="text-xl font-black text-white">ZEBEC Catalog Is Ready</h2>
+            <p class="text-xs text-gray-400 leading-relaxed">Admin panel ထဲမှ Post များ တင်ပါက ဤနေရာတွင် တိုက်ရိုက် ပေါ်လာပါမည်။</p>
+          </div>
+        `;
+        gridContainer.innerHTML = `
+          <div class="col-span-full py-16 text-center space-y-3 bg-[#12121D] rounded-3xl border border-[#1B1B2A] p-6">
+            <i class="fa-solid fa-cloud-arrow-up text-3xl text-purple-500/40"></i>
+            <p class="text-xs text-gray-400">No public content posted yet. Posts created in Admin panel sync here live.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const top = seriesCatalog[0];
+      bannerContainer.innerHTML = `
+        <div class="h-80 sm:h-96 relative w-full">
+          <img src="${top.banner || top.poster}" loading="lazy" class="w-full h-full object-cover opacity-60" />
+          <div class="absolute inset-0 bg-gradient-to-t from-[#090910] via-[#090910]/40 to-transparent"></div>
+          <div class="absolute bottom-0 p-6 sm:p-8 space-y-3 max-w-2xl">
+            <div class="flex flex-wrap gap-2">
+              <span class="bg-red-600 text-white text-[11px] px-3 py-1 rounded-full font-extrabold flex items-center gap-1">
+                <i class="fa-solid fa-fire"></i> Featured Release
+              </span>
+              ${(top.genre || []).map(g => `<span class="bg-[#1B1B2A] text-gray-300 text-[11px] px-2.5 py-1 rounded-full border border-gray-700 font-medium">${g}</span>`).join('')}
+            </div>
+            <h1 class="text-2xl sm:text-4xl font-black text-white leading-tight">${top.is18Plus ? '#18+ ' : ''}${top.title}</h1>
+            <p class="text-xs sm:text-sm text-gray-300 line-clamp-2">${top.synopsis || ''}</p>
+            <div class="flex items-center space-x-3 pt-2">
+              <button onclick="openSeriesDetails('${top.id}')" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-2xl font-bold flex items-center space-x-2 shadow-lg shadow-purple-600/40">
+                <i class="fa-solid fa-book-open"></i>
+                <span>Open Content</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      gridContainer.innerHTML = seriesCatalog.map(item => `
+        <div onclick="openSeriesDetails('${item.id}')" class="bg-[#12121D] rounded-2xl overflow-hidden border border-[#1B1B2A] hover:border-purple-500/50 transition-all flex flex-col cursor-pointer group">
+          <div class="relative aspect-[3/4] bg-[#1B1B2A] overflow-hidden">
+            <img src="${item.poster}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <div class="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded text-[10px] text-amber-400 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-star"></i> ${item.rating || '5.0'}
+            </div>
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-between space-y-1">
+            <h3 class="font-bold text-sm text-gray-100 line-clamp-1 group-hover:text-purple-400 transition-colors">${item.is18Plus ? '#18+ ' : ''}${item.title}</h3>
+            <span class="text-[11px] text-purple-400 font-semibold">${item.type} • ${(item.genre && item.genre[0]) || 'Series'}</span>
+            <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1 border-t border-[#1B1B2A]">
+              <span>${item.latestChapter || 'Chapter 1'}</span>
+              <span>${item.updatedAt || 'Recent'}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Details View
+    function openSeriesDetails(id) {
+      selectedSeries = seriesCatalog.find(s => s.id === id);
+      if (selectedSeries) recordReadingHistory(id, selectedSeries.title || 'Manga');
+      if (!selectedSeries) return;
+
+      const container = document.getElementById('detailsContent');
+      container.innerHTML = `
+        <div class="bg-[#12121D] rounded-3xl overflow-hidden border border-[#1B1B2A] p-5 sm:p-8 flex flex-col sm:flex-row gap-6">
+          <div class="w-36 sm:w-52 aspect-[3/4] rounded-2xl overflow-hidden bg-[#1B1B2A] shrink-0 border border-gray-700 shadow-2xl">
+            <img src="${selectedSeries.poster}" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+          <div class="flex-1 space-y-3">
+            <span class="bg-purple-600/30 text-purple-300 text-xs px-3 py-1 rounded-md font-bold border border-purple-500/30">${selectedSeries.type}</span>
+            <h1 class="text-2xl sm:text-3xl font-black text-white">${selectedSeries.is18Plus ? '#18+ ' : ''}${selectedSeries.title}</h1>
+            <div class="flex flex-wrap gap-1.5 py-1">
+              ${(selectedSeries.genre || []).map(g => `<span class="bg-[#1B1B2A] text-gray-300 text-xs px-2.5 py-1 rounded-full border border-gray-700">${g}</span>`).join('')}
+            </div>
+            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed pt-2 border-t border-[#1B1B2A]">${selectedSeries.synopsis || ''}</p>
+            <div class="pt-2">
+              <button onclick="toggleBookmark('${selectedSeries.id}')" class="bg-[#1B1B2A] text-gray-200 px-4 py-2 rounded-xl text-xs font-bold border border-gray-700 flex items-center space-x-2">
+                <i class="fa-solid fa-bookmark text-purple-400"></i>
+                <span>${userBookmarks.includes(selectedSeries.id) ? 'Bookmarked' : '+ Add Bookmark'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        ${selectedSeries.htmlViewerUrl ? `<div class="mt-6 rounded-3xl border border-purple-500/30 bg-[#12121D] p-4"><h2 class="font-bold text-lg mb-3">HTML Viewer</h2><iframe src="${selectedSeries.htmlViewerUrl}" title="${selectedSeries.title} HTML Viewer" loading="lazy" sandbox="allow-scripts allow-forms allow-same-origin allow-popups" referrerpolicy="no-referrer" class="w-full min-h-[70vh] rounded-xl bg-white"></iframe><p class="mt-2 text-xs text-gray-500">Admin ထည့်ထားသော HTML Viewer ကို web ပေါ်တွင်ပြထားသည်။</p></div>` : ''}
+        <div class="bg-[#12121D] rounded-3xl border border-[#1B1B2A] p-5 sm:p-6 space-y-4 mt-6">
+          <h2 class="font-bold text-lg text-white">Chapters / Episodes</h2>
+          <div class="space-y-2">
+            ${selectedSeries.chapters ? selectedSeries.chapters.map(ch => `
+              <div onclick="requestProtectedAccess('manga', '${ch.id}')" class="bg-[#1B1B2A] hover:bg-[#222235] p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all border border-transparent hover:border-purple-500/30">
+                <span class="font-semibold text-sm text-gray-200">${ch.title}</span>
+                <i class="fa-solid fa-lock text-xs text-purple-400"></i>
+              </div>
+            `).join('') : ''}
+          </div>
+        </div>
+        <div class="mt-6 rounded-3xl border border-[#1B1B2A] bg-[#12121D] p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-black">Community</h2>
+            <button id="like-btn-${selectedSeries.id}" onclick="togglePostLike('${selectedSeries.id}')" class="rounded-xl border border-pink-500/30 bg-pink-950/20 px-4 py-2 text-sm font-bold text-pink-300"><i class="fa-solid fa-heart mr-2"></i>Like <span id="like-count-${selectedSeries.id}">…</span></button>
+          </div>
+          <form onsubmit="postComment('${selectedSeries.id}');return false" class="flex gap-2">
+            <input id="comment-input-${selectedSeries.id}" maxlength="1000" placeholder="Comment ရေးပါ…" class="min-w-0 flex-1 rounded-xl border border-gray-700 bg-[#1B1B2A] px-3 py-2 text-sm text-white">
+            <button class="rounded-xl bg-purple-600 px-4 font-bold text-white">ပို့မည်</button>
+          </form>
+          <div id="comments-list-${selectedSeries.id}" class="space-y-2"><p class="text-xs text-gray-500">Comments loading…</p></div>
+        </div>
+      `;
+      navigateTo('details');
+      listenPostComments(selectedSeries.id);
+      db.collection('series').doc(selectedSeries.id).collection('likes').get().then(s=>{const el=document.getElementById('like-count-'+selectedSeries.id);if(el)el.textContent=s.size;}).catch(()=>{});
+    }
+
+    // Protected Content Access Gate
+    function requestProtectedAccess(type, contentId) {
+      if (!currentUser) {
+        openAuthModal();
+        return;
+      }
+      if (type === 'manga') {
+        openMangaReader(contentId);
+      }
+    }
+
+    function openMangaReader(chapterId) {
+      if (!selectedSeries || !selectedSeries.chapters) return;
+      const ch = selectedSeries.chapters.find(c => c.id === chapterId);
+      if (!ch) return;
+
+      document.getElementById('readerTitle').innerText = ch.title;
+      const stack = document.getElementById('mangaPagesStack');
+      stack.innerHTML = (ch.pages || []).map(img => `
+        <div class="relative min-h-[250px] bg-[#12121D]">
+          <img src="${img}" loading="lazy" onload="this.previousElementSibling?.remove()" class="w-full h-auto object-contain" />
+          <div class="absolute inset-0 bg-[#1B1B2A] animate-pulse flex items-center justify-center text-xs text-gray-500">Loading Page...</div>
+        </div>
+      `).join('');
+      navigateTo('reader');
+    }
+
+    // Toggle Bookmarks
+    function toggleBookmark(id) {
+      if (userBookmarks.includes(id)) {
+        userBookmarks = userBookmarks.filter(b => b !== id);
+      } else {
+        userBookmarks.push(id);
+      }
+      openSeriesDetails(id);
+    }
+
+    // Progress percentage tracker helper
+    function updateUploadProgress(percent) {
+      const bar = document.getElementById('uploadProgressBar');
+      const text = document.getElementById('uploadProgressPercent');
+      const box = document.getElementById('uploadProgressBox');
+      if (box && bar && text) {
+        box.classList.remove('hidden');
+        bar.style.width = percent + '%';
+        text.innerText = percent + '%';
+        if (percent >= 100) {
+          setTimeout(() => box.classList.add('hidden'), 1000);
+        }
+      }
+    }
+
+    // Upload images to Firebase Storage and save only download URLs in Firestore.
+    // This avoids Firestore's 1 MiB document limit when manga pages are uploaded.
+    async function uploadImageToStorage(file, folder) {
+      if (!file) return '';
+      if (!file.type || !file.type.startsWith('image/')) {
+        throw new Error('Image file တစ်ခုကို ရွေးပေးပါ။');
+      }
+      const safeName = String(file.name || 'image').replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+      const snapshot = await storage.ref(path).put(file, { contentType: file.type });
+      return await snapshot.ref.getDownloadURL();
+    }
+
+    async function handlePosterFileSelect(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        updateUploadProgress(10);
+        uploadedPosterData = await uploadImageToStorage(file, 'series/posters');
+        document.getElementById('posterPreviewImg').src = uploadedPosterData;
+        document.getElementById('posterPreview').classList.remove('hidden');
+        updateUploadProgress(100);
+      } catch (err) {
+        alert('Poster upload မအောင်မြင်ပါ။ Firebase Storage Rules ကိုစစ်ပါ။ ' + (err.message || err));
+      }
+    }
+
+    async function handleBannerFileSelect(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        updateUploadProgress(10);
+        uploadedBannerData = await uploadImageToStorage(file, 'series/banners');
+        document.getElementById('bannerPreviewImg').src = uploadedBannerData;
+        document.getElementById('bannerPreview').classList.remove('hidden');
+        updateUploadProgress(100);
+      } catch (err) {
+        alert('Banner upload မအောင်မြင်ပါ။ Firebase Storage Rules ကိုစစ်ပါ။ ' + (err.message || err));
+      }
+    }
+
+    async function handleBatchSelect(e) {
+      const files = Array.from((e.target && e.target.files) || []);
+      uploadedBatchPages = [];
+      const count = document.getElementById('batchCount');
+      const grid = document.getElementById('batchPreviewGrid');
+      if (!files.length) {
+        count.innerText = '0 Pages Selected';
+        grid.classList.add('hidden');
+        return;
+      }
+      try {
+        count.innerText = 'Uploading pages...';
+        updateUploadProgress(5);
+        // Promise.all preserves the original file-picker order.
+        uploadedBatchPages = await Promise.all(
+          files.map(file => uploadImageToStorage(file, 'series/chapters'))
+        );
+        count.innerText = `${uploadedBatchPages.length} Pages Uploaded`;
+        grid.classList.remove('hidden');
+        grid.innerHTML = uploadedBatchPages.map(src => `
+          <div class="aspect-square rounded-lg overflow-hidden bg-black">
+            <img src="${src}" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        `).join('');
+        updateUploadProgress(100);
+      } catch (err) {
+        uploadedBatchPages = [];
+        count.innerText = 'Upload failed';
+        alert('Chapter page upload မအောင်မြင်ပါ။ Firebase Storage Rules / network ကိုစစ်ပါ။ ' + (err.message || err));
+      }
+    }
+
+    // Edit Existing Series in Admin Panel
+    function editSeriesPost(seriesId) {
+      const target = seriesCatalog.find(s => s.id === seriesId);
+      if (!target) return;
+
+      editingSeriesId = seriesId;
+      document.getElementById('admTitle').value = target.title || '';
+      document.getElementById('admType').value = target.type || 'Manhwa';
+      document.getElementById('admGenres').value = (target.genre || []).join(', ');
+      document.getElementById('admSynopsis').value = target.synopsis || '';
+      
+      uploadedPosterData = target.poster || '';
+      uploadedBannerData = target.banner || '';
+
+      if (uploadedPosterData) {
+        document.getElementById('posterPreviewImg').src = uploadedPosterData;
+        document.getElementById('posterPreview').classList.remove('hidden');
+      }
+      if (uploadedBannerData) {
+        document.getElementById('bannerPreviewImg').src = uploadedBannerData;
+        document.getElementById('bannerPreview').classList.remove('hidden');
+      }
+
+      document.getElementById('formSubmitBtnText').innerText = "Update Firestore Post";
+      switchAdminSubTab('uploader');
+    }
+
+    // Delete Series Post directly from Firebase Firestore
+    async function deleteSeriesPost(seriesId) {
+      if (!currentUser || (currentUser.email || '').toLowerCase() !== 'zaroqt@gmail.com') {
+        alert('Admin account ဖြင့် Login ဝင်ပါ။');
+        return;
+      }
+      if (!confirm("Are you sure you want to delete this post permanently?")) return;
+
+      try {
+        await db.collection("series").doc(seriesId).delete();
+        seriesCatalog = seriesCatalog.filter(s => s.id !== seriesId);
+        renderHome();
+        renderAdminPostsList();
+        alert("Post deleted successfully from Firestore.");
+      } catch (err) {
+        alert("Error deleting post: " + err.message);
+      }
+    }
+
+    // Admin Publish & Update Handler directly synced with Firebase Firestore
+    async function handleAdminPublish(e) {
+      e.preventDefault();
+      if (!currentUser || (currentUser.email || '').toLowerCase() !== 'zaroqt@gmail.com') {
+        alert('Admin account ဖြင့် Login ဝင်ပါ။');
+        return;
+      }
+      const title = document.getElementById('admTitle').value;
+      const type = document.getElementById('admType').value;
+      const genres = document.getElementById('admGenres').value.split(',').map(g => g.trim());
+      const synopsis = document.getElementById('admSynopsis').value;
+      const is18Plus = document.getElementById('admAdultContent').checked;
+      const htmlViewerUrl = document.getElementById('admHtmlUrl').value.trim();
+
+      const docId = editingSeriesId || ('post-' + Date.now());
+
+      const postPayload = {
+        id: docId,
+        title: title,
+        type: type,
+        genre: genres,
+        synopsis: synopsis,
+        is18Plus,
+        htmlViewerUrl,
+        poster: uploadedPosterData || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&q=80',
+        banner: uploadedBannerData || uploadedPosterData || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80',
+        rating: '5.0',
+        updatedAt: 'Just now',
+        latestChapter: 'Chapter 1',
+        chapters: [
+          { id: 'ch1', title: 'Chapter 1', pages: uploadedBatchPages.length > 0 ? uploadedBatchPages : [] }
+        ]
+      };
+
+      try {
+        updateUploadProgress(50);
+        await db.collection("series").doc(docId).set(postPayload, { merge: true });
+        updateUploadProgress(100);
+
+        if (editingSeriesId) {
+          const idx = seriesCatalog.findIndex(s => s.id === editingSeriesId);
+          if (idx !== -1) seriesCatalog[idx] = postPayload;
+          editingSeriesId = null;
+          document.getElementById('formSubmitBtnText').innerText = "Publish Directly To Platform";
+        } else {
+          seriesCatalog.unshift(postPayload);
+        }
+
+        renderHome();
+        renderAdminPostsList();
+        alert('Post published & synced to Firebase successfully!');
+        
+        // Reset inputs
+        document.getElementById('adminUploaderForm').reset();
+        document.getElementById('posterPreview').classList.add('hidden');
+        document.getElementById('bannerPreview').classList.add('hidden');
+        document.getElementById('batchPreviewGrid').classList.add('hidden');
+        uploadedPosterData = '';
+        uploadedBannerData = '';
+        uploadedBatchPages = [];
+        navigateTo('home');
+      } catch (err) {
+        alert("Firestore save failed: " + err.message);
+      }
+    }
+
+    // Render Posts Management Table in Admin
+    function renderAdminPostsList() {
+      const container = document.getElementById('adminPostsList');
+      if (!container) return;
+
+      if (seriesCatalog.length === 0) {
+        container.innerHTML = `<div class="p-4 text-center text-xs text-gray-500">No posts stored in database.</div>`;
+        return;
+      }
+
+      container.innerHTML = seriesCatalog.map(item => `
+        <div class="p-3 bg-[#1B1B2A] rounded-2xl flex items-center justify-between border border-gray-800 text-xs">
+          <div class="flex items-center space-x-3">
+            <img src="${item.poster}" class="w-10 h-12 object-cover rounded-lg bg-black" />
+            <div>
+              <p class="font-bold text-white">${item.title}</p>
+              <p class="text-[10px] text-purple-400">${item.type} • ${(item.genre || []).join(', ')}</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="editSeriesPost('${item.id}')" class="px-2.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-[11px] flex items-center gap-1">
+              <i class="fa-solid fa-pen-to-square"></i> Edit
+            </button>
+            <button onclick="deleteSeriesPost('${item.id}')" class="px-2.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-[11px] flex items-center gap-1">
+              <i class="fa-solid fa-trash"></i> Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Admin Management Tabs
+    function switchAdminSubTab(tab) {
+      document.getElementById('admTabUploader').className = (tab === 'uploader') ? "px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white" : "px-4 py-2 rounded-xl text-xs font-bold bg-[#12121D] text-gray-400 hover:text-white";
+      document.getElementById('admTabManage').className = (tab === 'manage') ? "px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white" : "px-4 py-2 rounded-xl text-xs font-bold bg-[#12121D] text-gray-400 hover:text-white";
+      document.getElementById('admTabUsers').className = (tab === 'users') ? "px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white" : "px-4 py-2 rounded-xl text-xs font-bold bg-[#12121D] text-gray-400 hover:text-white";
+      document.getElementById('admTabAds').className = (tab === 'ads') ? "px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white" : "px-4 py-2 rounded-xl text-xs font-bold bg-[#12121D] text-gray-400 hover:text-white";
+
+      document.getElementById('adminUploaderForm').classList.toggle('hidden', tab !== 'uploader');
+      document.getElementById('adminManagePostsPanel').classList.toggle('hidden', tab !== 'manage');
+      document.getElementById('adminUsersPanel').classList.toggle('hidden', tab !== 'users');
+      document.getElementById('adminAdsPanel').classList.toggle('hidden', tab !== 'ads');
+
+      if (tab === 'manage') renderAdminPostsList();
+    }
+
+    function renderAdminUsers() {
+      const container = document.getElementById('userListContainer');
+      if (!container) return;
+      container.innerHTML = registeredUsers.map((u, i) => `
+        <div class="p-3 bg-[#1B1B2A] rounded-2xl flex items-center justify-between border border-gray-800 text-xs">
+          <div>
+            <p class="font-bold text-white">${u.email}</p>
+            <p class="text-[10px] text-purple-400 font-semibold">${u.premium ? 'Premium Tier' : 'Free Member'}</p>
+          </div>
+          <button onclick="toggleUserPremium(${i})" class="px-3 py-1.5 rounded-xl font-bold text-[11px] ${u.premium ? 'bg-amber-600 text-white' : 'bg-purple-600 text-white'}">
+            ${u.premium ? 'Revoke Premium' : 'Accept Premium'}
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function toggleUserPremium(index) {
+      registeredUsers[index].premium = !registeredUsers[index].premium;
+      renderAdminUsers();
+    }
+
+    async function saveMaintenanceSettings() {
+      if(!currentUser || (currentUser.email||'').toLowerCase()!=='zaroqt@gmail.com') return alert('Admin only');
+      try {
+        await db.collection('siteSettings').doc('maintenance').set({
+          enabled: document.getElementById('maintenanceEnabled').checked,
+          message: document.getElementById('maintenanceMessage').value.trim() || 'Website ကို maintenance ပြုလုပ်နေပါသည်။',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedBy: currentUser.uid
+        }, {merge:true});
+        alert('Maintenance settings saved.');
+      } catch(e) { alert('မသိမ်းနိုင်ပါ။ Firestore Rules ကိုစစ်ပါ။ '+e.message); }
+    }
+
+    function saveAdSettings() {
+      const text = document.getElementById('adTextInput').value;
+      document.getElementById('adText').innerText = text;
+      document.getElementById('topAdBannerContainer').classList.remove('hidden');
+      alert('Advertisement banner activated!');
+    }
+
+    // Search and genre filters (these handlers were referenced by the UI but missing).
+    function handleSearchInput(value) {
+      const query = (value || '').trim().toLowerCase();
+      const results = seriesCatalog.filter(item => {
+        const haystack = [
+          item.title || '',
+          item.type || '',
+          item.synopsis || '',
+          ...(Array.isArray(item.genre) ? item.genre : [])
+        ].join(' ').toLowerCase();
+        const matchesQuery = !query || haystack.includes(query);
+        const selected = (selectedGenre || 'All').toLowerCase();
+        const matchesGenre = selected === 'all' ||
+          (selected === 'popular' ? true :
+            (String(item.type || '').toLowerCase() === selected ||
+             (Array.isArray(item.genre) && item.genre.some(g => String(g).toLowerCase() === selected))));
+        return matchesQuery && matchesGenre;
+      });
+      const grid = document.getElementById('searchGrid');
+      if (!grid) return;
+      grid.innerHTML = results.length ? results.map(item => `
+        <div onclick="openSeriesDetails('${String(item.id).replace(/'/g, "\\'")}')" class="bg-[#12121D] rounded-2xl overflow-hidden border border-[#1B1B2A] hover:border-purple-500/50 cursor-pointer group">
+          <div class="aspect-[3/4] bg-[#1B1B2A] overflow-hidden">
+            <img src="${item.poster || ''}" alt="${String(item.title || 'Poster').replace(/"/g, '&quot;')}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+          </div>
+          <div class="p-3">
+            <h3 class="font-bold text-sm">${item.title || 'Untitled'}</h3>
+            <p class="text-[11px] text-purple-400">${item.type || 'Series'} · ${(item.genre || []).slice(0, 2).join(', ')}</p>
+          </div>
+        </div>`).join('') : `<div class="col-span-full text-center p-10 text-sm text-gray-400">ရှာဖွေမှုနဲ့ ကိုက်ညီတဲ့ Post မရှိသေးပါ။</div>`;
+    }
+
+    function filterByGenre(genre) {
+      selectedGenre = genre || 'All';
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) handleSearchInput(searchInput.value);
+      if (['Manhwa', 'Manga', 'Anime', 'Romance', 'All', 'Popular'].includes(selectedGenre)) {
+        const grid = document.getElementById('searchGrid');
+        if (grid) handleSearchInput(searchInput ? searchInput.value : '');
+      }
+    }
+
+    async function generateSamplePost() {
+      if (!currentUser || (currentUser.email || '').toLowerCase() !== 'zaroqt@gmail.com') {
+        alert('Sample Post ထည့်ရန် Admin account ဖြင့် Login ဝင်ပါ။');
+        return;
+      }
+      const docId = 'sample-' + Date.now();
+      const sample = {
+        title: 'Sample Manga',
+        type: 'Manhwa',
+        genre: ['Action', 'Fantasy'],
+        synopsis: 'ဤသည် စမ်းသပ်ရန်အတွက် Sample Post ဖြစ်သည်။ Admin panel မှ ပြင်ဆင်နိုင်ပါသည်။',
+        poster: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&q=80',
+        banner: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80',
+        rating: '5.0',
+        updatedAt: 'Just now',
+        latestChapter: 'Chapter 1',
+        chapters: [{ id: 'ch1', title: 'Chapter 1', pages: [] }],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      try {
+        await db.collection('series').doc(docId).set(sample);
+        alert('Sample Post တင်ပြီးပါပြီ။ User များမြင်နိုင်ရန် Firestore Rules မှ series collection read ကို ခွင့်ပြုထားရပါမယ်။');
+      } catch (err) {
+        alert('Sample Post မတင်နိုင်ပါ: ' + (err.message || err));
+      }
+    }
+
+
+    // Social, profile, membership, history and public chat features
+    let profileData = null, profileHistoryUnsub = null, publicChatUnsub = null, commentsUnsub = null;
+    function requireLogin() { if (!currentUser) { openAuthModal(); switchAuthMode('login'); return false; } return true; }
+    async function loadProfile() {
+      if (!currentUser) return;
+      const ref = db.collection('users').doc(currentUser.uid);
+      try {
+        const snap = await ref.get();
+        profileData = snap.exists ? snap.data() : {};
+        document.getElementById('profileEmail').textContent = currentUser.email || '';
+        document.getElementById('profileName').textContent = profileData.displayName || (currentUser.email || 'My Profile').split('@')[0];
+        document.getElementById('profileAvatar').src = profileData.photoURL || currentUser.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
+        const tier = profileData.role === 'admin' ? 'Admin' : (profileData.premium ? 'Premium User' : 'Free User');
+        document.getElementById('profileTier').textContent = tier;
+        document.getElementById('profileMembership').textContent = tier;
+        await loadProfileHistoryAndLikes();
+      } catch(e) { console.warn('Profile load failed', e); }
+    }
+    async function uploadProfileAvatar(event) {
+      if (!requireLogin()) return;
+      const file = event.target.files && event.target.files[0]; if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('Image ဖိုင်ကိုရွေးပါ။'); return; }
+      if (file.size > 5*1024*1024) { alert('ပုံအရွယ်အစား 5MB အောက်ဖြစ်ရပါမယ်။'); return; }
+      try {
+        const ref = storage.ref(`profileAvatars/${currentUser.uid}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`);
+        const task = await ref.put(file);
+        const url = await task.ref.getDownloadURL();
+        await db.collection('users').doc(currentUser.uid).set({photoURL:url, email:currentUser.email, updatedAt:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true});
+        document.getElementById('profileAvatar').src = url; alert('Profile ပုံပြောင်းပြီးပါပြီ။');
+      } catch(e) { alert('ပုံတင်မရပါ။ Firebase Storage Rules ကိုစစ်ပါ။ '+(e.message||'')); }
+    }
+    async function recordReadingHistory(seriesId, title) {
+      if (!currentUser) return;
+      try { await db.collection('users').doc(currentUser.uid).collection('history').doc(seriesId).set({seriesId,title,visitedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); } catch(e) { console.warn(e); }
+    }
+    async function loadProfileHistoryAndLikes() {
+      if (!currentUser) return;
+      const historyEl=document.getElementById('profileHistory'), likesEl=document.getElementById('profileLikes');
+      try {
+        const [h,l] = await Promise.all([
+          db.collection('users').doc(currentUser.uid).collection('history').orderBy('visitedAt','desc').limit(30).get(),
+          db.collection('users').doc(currentUser.uid).collection('likes').orderBy('likedAt','desc').limit(50).get()
+        ]);
+        document.getElementById('profileHistoryCount').textContent=h.size;
+        document.getElementById('profileLikesCount').textContent=l.size;
+        historyEl.innerHTML=h.empty?'History မရှိသေးပါ။':h.docs.map(d=>`<div class="rounded-xl bg-[#1B1B2A] p-3">${escapeHtml(d.data().title||'Manga')} <span class="float-right text-xs text-gray-500">ဖတ်ရှုခဲ့သည်</span></div>`).join('');
+        likesEl.innerHTML=l.empty?'Liked Post မရှိသေးပါ။':l.docs.map(d=>`<button onclick="openSeriesDetails('${d.id}')" class="block w-full rounded-xl bg-[#1B1B2A] p-3 text-left">${escapeHtml(d.data().title||'Post')}</button>`).join('');
+      } catch(e) { historyEl.textContent='History ဖတ်မရပါ။ Firestore Rules ကိုစစ်ပါ။'; }
+    }
+    function escapeHtml(v) { return String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    async function togglePostLike(seriesId) {
+      if (!requireLogin()) return;
+      const ref=db.collection('series').doc(seriesId).collection('likes').doc(currentUser.uid);
+      try {
+        const snap=await ref.get();
+        if(snap.exists) await ref.delete();
+        else await ref.set({uid:currentUser.uid,email:currentUser.email||'',likedAt:firebase.firestore.FieldValue.serverTimestamp()});
+        const userLike=db.collection('users').doc(currentUser.uid).collection('likes').doc(seriesId);
+        if(snap.exists) await userLike.delete();
+        else await userLike.set({seriesId,title:(seriesCatalog.find(s=>s.id===seriesId)||{}).title||'Post',likedAt:firebase.firestore.FieldValue.serverTimestamp()});
+        const count=await db.collection('series').doc(seriesId).collection('likes').get();
+        const n=document.getElementById('like-count-'+seriesId); if(n)n.textContent=count.size;
+        const b=document.getElementById('like-btn-'+seriesId); if(b)b.classList.toggle('text-pink-400',!snap.exists);
+      } catch(e) { alert('Like မလုပ်နိုင်ပါ။ Firestore Rules ကိုစစ်ပါ။ '+e.message); }
+    }
+    async function postComment(seriesId) {
+      if(!requireLogin()) return;
+      const input=document.getElementById('comment-input-'+seriesId), text=(input&&input.value||'').trim();
+      if(!text)return; if(text.length>1000){alert('Comment 1000 characters အောက်ထားပါ။');return;}
+      try { await db.collection('series').doc(seriesId).collection('comments').add({uid:currentUser.uid,email:currentUser.email||'',text,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); input.value=''; }
+      catch(e){alert('Comment မပို့နိုင်ပါ။ Firestore Rules ကိုစစ်ပါ။ '+e.message);}
+    }
+    function listenPostComments(seriesId) {
+      const el=document.getElementById('comments-list-'+seriesId); if(!el)return;
+      if(commentsUnsub) commentsUnsub();
+      commentsUnsub=db.collection('series').doc(seriesId).collection('comments').orderBy('createdAt','desc').limit(30).onSnapshot(s=>{
+        const isAdmin=currentUser && (currentUser.email||'').toLowerCase()==='zaroqt@gmail.com';
+        el.innerHTML=s.empty?'<p class="text-xs text-gray-500">Comment မရှိသေးပါ။</p>':s.docs.map(d=>`<div class="rounded-xl bg-[#1B1B2A] p-2.5 text-xs"><p class="font-bold text-purple-300">${escapeHtml(d.data().email||'User')}</p><p class="mt-1 break-words">${escapeHtml(d.data().text)}</p>${isAdmin?`<button onclick="deleteComment('${seriesId}','${d.id}')" class="mt-1 text-red-400">Delete</button>`:''}</div>`).join('');
+      },e=>{el.textContent='Comments ဖတ်မရပါ။ Rules ကိုစစ်ပါ။';});
+    }
+    async function deleteComment(seriesId,id) {
+      if(!currentUser || (currentUser.email||'').toLowerCase()!=='zaroqt@gmail.com')return alert('Admin only');
+      try{await db.collection('series').doc(seriesId).collection('comments').doc(id).delete();}catch(e){alert(e.message);}
+    }
+    function togglePublicChat(force) {
+      if(force===true) document.getElementById('publicChatPanel').classList.remove('hidden');
+      else if(force===false) document.getElementById('publicChatPanel').classList.add('hidden');
+      else document.getElementById('publicChatPanel').classList.toggle('hidden');
+      if(!document.getElementById('publicChatPanel').classList.contains('hidden')) {
+        if(!currentUser){openAuthModal();switchAuthMode('login');return;}
+        if(!publicChatUnsub) publicChatUnsub=db.collection('publicChat').orderBy('createdAt','asc').limit(100).onSnapshot(s=>{
+          const el=document.getElementById('publicChatMessages');
+          el.innerHTML=s.docs.map(d=>{const m=d.data(),admin=currentUser&&(currentUser.email||'').toLowerCase()==='zaroqt@gmail.com';return `<div class="rounded-xl bg-[#1B1B2A] p-3"><div class="flex items-center justify-between gap-2"><span class="font-bold text-purple-300">${escapeHtml(m.displayName||m.email||'User')}</span>${admin?`<button onclick="deleteChatMessage('${d.id}')" class="text-xs text-red-400">Delete</button>`:''}</div><p class="mt-1 break-words text-gray-200">${escapeHtml(m.text)}</p></div>`}).join('')||'<p class="text-center text-xs text-gray-500">Chat message မရှိသေးပါ။</p>';
+          el.scrollTop=el.scrollHeight;
+        },e=>{document.getElementById('publicChatMessages').textContent='Chat ဖတ်မရပါ။ Firestore Rules ကိုစစ်ပါ။';});
+      }
+    }
+    async function sendPublicChatMessage(e) {
+      e.preventDefault(); if(!requireLogin())return;
+      const input=document.getElementById('publicChatInput'), text=input.value.trim(); if(!text)return;
+      if(text.length>500){alert('စာလုံး 500 အောက်ထားပါ။');return;}
+      try { await db.collection('publicChat').add({uid:currentUser.uid,email:currentUser.email||'',displayName:(profileData&&profileData.displayName)||currentUser.email.split('@')[0],text,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); input.value=''; }
+      catch(err){alert('စာမပို့နိုင်ပါ။ Rules သို့မဟုတ် account ban ကိုစစ်ပါ။ '+err.message);}
+    }
+    async function deleteChatMessage(id) {
+      if(!currentUser || (currentUser.email||'').toLowerCase()!=='zaroqt@gmail.com')return alert('Admin only');
+      try{await db.collection('publicChat').doc(id).delete();}catch(e){alert(e.message);}
+    }
+    async function requestPushPermission(){
+      try {
+        if(!('Notification' in window) || !('serviceWorker' in navigator)) throw new Error('ဒီ browser က Web Push ကိုမထောက်ပံ့ပါ။ HTTPS domain သုံးပါ။');
+        const permission=await Notification.requestPermission();
+        if(permission!=='granted') throw new Error('Notification permission ကိုခွင့်မပြုထားပါ။');
+        if(!currentUser) throw new Error('Notification ကို device နဲ့ချိတ်ဖို့ အရင် Login ဝင်ပါ။');
+        const cfgRes=await fetch('/api/push/config'); const cfg=await cfgRes.json();
+        if(!cfg.vapidKey) throw new Error('Server .env ထဲမှာ FCM_VAPID_KEY ထည့်ရန်လိုပါသည်။ Firebase Console > Project Settings > Cloud Messaging > Web Push certificates မှရယူပါ။');
+        const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        const messaging=firebase.messaging();
+        const pushToken=await messaging.getToken({vapidKey:cfg.vapidKey,serviceWorkerRegistration:reg});
+        const idToken=await currentUser.getIdToken();
+        const save=await fetch('/api/push/register',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify({token:pushToken})});
+        if(!save.ok) throw new Error('Push token သိမ်းမရပါ။');
+        alert('ဒီ device အတွက် Notification ဖွင့်ပြီးပါပြီ။');
+      } catch(e){ alert(e.message||'Notification setup မအောင်မြင်ပါ။'); }
+    }
+    async function sendAdminPush(){
+      if(!currentUser){alert('Admin login လုပ်ပါ။');return;}
+      const title=document.getElementById('pushTitle').value.trim(), body=document.getElementById('pushBody').value.trim();
+      if(!title||!body){alert('Title နှင့် message ဖြည့်ပါ။');return;}
+      try{const token=await currentUser.getIdToken();const r=await fetch('/api/admin/notifications',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({title,body})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Push ပို့မရပါ။');alert(`Notification ပို့ပြီးပါပြီ (${d.sent||0} devices)`);}catch(e){alert(e.message||'Notification API မရနိုင်ပါ။');}
+    }
+
+    // Maintenance banner is controlled by the admin settings document; enforcement must also be in backend/rules.
+    db.collection('siteSettings').doc('maintenance').onSnapshot(s=>{
+      const d=s.exists?s.data():{};
+      let banner=document.getElementById('maintenanceBanner');
+      if(d.enabled){
+        if(!banner){banner=document.createElement('div');banner.id='maintenanceBanner';banner.className='mx-4 mt-4 rounded-2xl border border-amber-500/40 bg-amber-900/20 p-4 text-sm text-amber-100';document.querySelector('main')?.prepend(banner);}
+        banner.textContent=d.message||'Website ကို maintenance ပြုလုပ်နေပါသည်။';
+      } else if(banner) banner.remove();
+    },e=>console.warn('Maintenance settings read failed',e));
+
+    // Initialize Application and Real-Time Listeners
+    window.addEventListener('DOMContentLoaded', function() {
+      listenToFirestoreCatalog();
+    });
+  </script>
+</body>
+</html>

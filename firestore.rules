@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && request.auth.token.admin == true; }
+    function notBanned() {
+      return signedIn() &&
+        (!exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.banned != true);
+    }
+    match /series/{seriesId} {
+      allow read: if true;
+      allow create, update, delete: if admin();
+      match /likes/{uid} {
+        allow read: if true;
+        allow create, update: if signedIn() && notBanned() && request.auth.uid == uid;
+        allow delete: if (signedIn() && request.auth.uid == uid) || admin();
+      }
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if signedIn() && notBanned() &&
+          request.resource.data.uid == request.auth.uid &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() <= 1000;
+        allow delete: if admin() || (signedIn() && resource.data.uid == request.auth.uid);
+        allow update: if false;
+      }
+    }
+    match /users/{uid} {
+      allow read: if (signedIn() && request.auth.uid == uid) || admin();
+      allow create: if signedIn() && request.auth.uid == uid &&
+        !('admin' in request.resource.data) && !('premium' in request.resource.data) &&
+        !('banned' in request.resource.data);
+      allow update: if admin() || (signedIn() && request.auth.uid == uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName','photoURL','updatedAt','email']));
+      allow delete: if admin();
+      match /history/{itemId} {
+        allow read, write: if signedIn() && request.auth.uid == uid && notBanned();
+      }
+      match /likes/{itemId} {
+        allow read, write: if signedIn() && request.auth.uid == uid && notBanned();
+      }
+    }
+    match /publicChat/{messageId} {
+      allow read: if true;
+      allow create: if signedIn() && notBanned() &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.text is string &&
+        request.resource.data.text.size() > 0 &&
+        request.resource.data.text.size() <= 500;
+      allow update: if false;
+      allow delete: if admin();
+    }
+    match /siteSettings/{settingId} {
+      allow read: if true;
+      allow write: if admin();
+    }
+    match /_emailLoginCodes/{id} { allow read, write: if false; }
+    match /_authRateLimits/{id} { allow read, write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
